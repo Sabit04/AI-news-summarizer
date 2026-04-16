@@ -32,12 +32,16 @@ class TextIn(BaseModel):
     text: str = Field(..., min_length=50, max_length=MAX_INPUT_CHARS)
     max_length: int = Field(150, ge=40, le=300)
     min_length: int = Field(40, ge=10, le=200)
+    temperature: float = Field(1.0, ge=0.1, le=2.0)
+    repetition_penalty: float = Field(1.2, ge=1.0, le=3.0)
 
 
 class UrlIn(BaseModel):
     url: str = Field(..., min_length=8, max_length=2000)
     max_length: int = Field(150, ge=40, le=300)
     min_length: int = Field(40, ge=10, le=200)
+    temperature: float = Field(1.0, ge=0.1, le=2.0)
+    repetition_penalty: float = Field(1.2, ge=1.0, le=3.0)
 
 
 @app.get("/")
@@ -53,7 +57,11 @@ def health():
 @app.post("/summarize")
 def summarize_text(body: TextIn):
     try:
-        return summarize(body.text, body.max_length, body.min_length)
+        return summarize(
+            body.text, body.max_length, body.min_length,
+            temperature=body.temperature,
+            repetition_penalty=body.repetition_penalty,
+        )
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
@@ -74,7 +82,11 @@ def summarize_url(body: UrlIn):
         )
 
     try:
-        result = summarize(text, body.max_length, body.min_length)
+        result = summarize(
+            text, body.max_length, body.min_length,
+            temperature=body.temperature,
+            repetition_penalty=body.repetition_penalty,
+        )
         result["source_url"] = body.url
         return result
     except RuntimeError as e:
